@@ -1,0 +1,43 @@
+// students collection ini yasa gore azalan sekilde siralayiniz.
+use ("school");
+db.students.find({},{"_id":0}).
+sort({"age":-1});
+
+//students collection inda yasca en buyuk ikinci kisiyi name ve age goruntuleyiniz.
+use("school");
+db.students.find({},{"name":1,"age":1,"_id":0}).
+sort({"age":-1}).skip(1).limit(1);
+
+// students collection inda yasca en kucuk kisiyi name ve age goruntuleyiniz.
+use("school");
+db.students.find({},{"name":1,"age":1,"_id":0}).
+sort({"age":1}).limit(1);
+
+use("school");
+db.students.findOne({},{"name":1,"age":1,"_id":0},{sort:{"age":1}})
+
+// students collection inda program dili Turkce olan bolumde okuyan ve puani(grade) 500 den fazla olan kisileri goruntule.
+// (name,department,grade)
+use("school");
+db.students.find({$and:[{"department.language":"tr"},{"grade":{$gt:500}}]},{"name":1,"department":1,"grade":1,"_id":0});
+
+// students collection inda department i IT, Math veya Chemistry olan kisileri isme gore artan sirali goruntuleyiniz.
+// (name,department)
+use("school");
+db.students.find({"department.name":{$in:["IT","Math","Chemistry"]}},{"name":1,"department":1,"_id":0}).sort({"name":1});
+
+// students collection inda department i IT, Math veya Chemistry olan kisilerin sayisini bulunuz.
+use("school");
+db.students.find({"department.name":{$in:["IT","Math","Chemistry"]}}).count();
+
+// students collection inda city si Istanbul,Izmir veya Ankara olan kisileri grade e gore azalan sirali goruntuleyiniz.
+// (name, city, grade)
+use("school");
+db.students.find({"city":{$in:["İstanbul","İzmir","Ankara"]}},{"name":1,"city":1,"grade":1,"_id":0}).sort({"grade":-1});
+
+// students collection inda program dili eng olan bolumde okuyan veya yasi 35 veya 35 den kucuk olan kisileri goruntule.
+// (name,department,age)
+use("school");
+db.students.find({$or:[{"department.language":"eng"},{"age":{$lte:35}}]},{"name":1,"department":1,"age":1,"_id":0});
+
+
