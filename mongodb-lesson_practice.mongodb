@@ -1,0 +1,138 @@
+use("school");
+db.students.find({},{"_id":0}).sort("age")
+use("school");
+db.students.find({},{"name":1,"age":1,"_id":0}).sort({"age":-1}).skip(1).limit(1)
+use("school");
+db.students.find({},{"name":1,"age":1,"_id":0}).sort("age").limit(1)
+use("school");
+db.students.findOne({},{"name":1,"age":1,"_id":0},{sort:{"age":1}})
+use("school");
+db.students.
+findOne({$and:[{"department.language":"tr","grade":{$gte:500}}]},
+{"name":1,"department":1,"grade":1,"_id":0})
+use("school");
+db.students.
+find({"department.name":{$in:["IT","Math","Chemistry"]}},{"name":1,"department":1,"_id":0}).
+sort({"name":1})
+use("school");
+db.students.
+find({"department.name":{$in:["IT","Math","Chemistry"]}},{"name":1,"department":1,"_id":0}).
+sort({"name":1}).count()
+
+use("school");
+db.students.
+find({"city":{$in:["İstanbul","İzmir","Ankara"]}},{"name":1,"city":1,"grade":1,"_id":0}).
+sort({"grade":-1})
+
+use("school");
+db.students.
+find({$or:[{"department.language":"eng"},{"age":{$lte:35}}]},{"name":1,"age":1,"department":1,"_id":0})
+
+//=================================================
+//                   AGGREGATION
+//=================================================
+// 1) Aggregation, dokumanlardaki verilerin islenmesi ve hesaplanan
+//    sonuclarin donmesini saglayan islemlerdir.
+//
+// 2) Aggregation islemleri, farklı dokumanlardaki degerleri gruplandirabilir.
+//
+// 3) Bu gruplanan veriler uzerinde cesitli islemlerin gereceklestirelerek tek
+//    bir sonuc degerinin donmesi saglanabilir.
+//
+// 4) MongoDB, 3 farklı yontem ile aggregation gerceklestirmeye izin verir.
+//     A) aggregation pipeline (toplama boru hattı) --> best practice...
+//     B) map-reduce function (map indirgeme)
+//     C) single-purpose aggregation (tek-amaç toplama)
+//
+// 5) Aggregiation, SQL'deki Join islemlerine benzetilebilir.
+//=================================================
+//             AGGREGATION PIPELINE
+//=================================================
+// SYNTAX
+//
+//   pipeline = [
+//   { $match : { … },
+//   { $group : { … },
+//   { $sort : { … },
+//      ...
+//   ]
+//   db.collectionName.aggregate({pipeline}, {options})
+//
+//  $match() –> Verileri secerken flitrelemek icin
+//  $group({_id : "$field"}) - >islenen verilerin gruplanmasi icin
+//  $sort() -> Sonuclarin siralanmasi icin
+// NOT : VSCode ile yazıldığından , her komut önüne, use("DB_ismi") yazılmalı !!
+
+use('okul');
+db.grades.insertMany([
+{_id:6305, name: "A. MacDyver", "assignment":5, "points" :24},
+{_id:6308, name: "B. Batlock", "assignment":3, "points" :22},
+{_id:6312, name: "M. Tagnum", "assignment":5, "points" :30},
+{_id:6319, name: "R. Stiles", "assignment":2, "points" :12},
+{_id:6322, name: "A. MacDyver", "assignment":2, "points" :14},
+{_id:6334, name: "R. Stiles", "assignment":1, "points" :10}
+]);
+
+// butun assignment larin toplam pointlerini bulunuz.
+use('okul');
+var pipeline=[
+              {$match:{}}, 
+              {$group:{"_id":"$assignment", total_points:{$sum:"$points"}}}
+             ];
+db.grades.aggregate(pipeline);
+
+// her assignment larin ortalama point degerlerini bulunuz.
+use("okul");
+var pipeline=[
+              {$match:{}},
+              {$group:{"_id":"$assignment",avg_point:{$avg:"$points"}}}
+             ]
+db.grades.aggregate(pipeline);
+
+// her assignment in en kucuk point degerini bulalim
+use("okul");
+var pipeline=[
+              {$match:{}},
+              {$group:{"_id":"$assignment",min_points:{$min:"$points"}}}
+             ];
+db.grades.aggregate(pipeline);
+
+// assignment sayisi 4 den az olan kayitlarin ortalama point sayisini bulalim
+use("okul");
+var pipeline=[
+              {$match:{"assignment":{$lt:4}}},
+              {$group:{"_id":"$assignment",avg_points:{$avg:"$points"}}}
+             ];
+db.grades.aggregate(pipeline);
+
+// ismi A ile baslayan dokumanlarin toplam point sayisini bulalim
+use("okul");
+var pipeline=[
+              {$match:{"name":{$regex:"^A"}}},
+              {$group:{"_id":null, total_points:{$sum:"$points"}}}
+             ];
+db.grades.aggregate(pipeline);
+
+// ismi s ile biten dokumanlarin toplam point sayisini bulalim
+use("okul");
+var pipeline=[
+              {$match:{"name":{$regex:"s$"}}},
+              {$group:{"_id":null, total_points:{$sum:"$points"}}}
+             ];
+db.grades.aggregate(pipeline);
+
+// points degeri 19 dan dusuk olan dokumanlarin sayisini bulunuz
+
+use("okul");
+var pipeline=[
+              {$match:{"points":{$lt:19}}},
+              {$count:"Az puanlar"}
+             ];
+             db.grades.aggregate(pipeline);
+use("okul");
+db.grades.find({"points":{$lt:19}}).count()
+
+use("okul");
+db.grades.count({"points":{$lt:19}})
+
+
