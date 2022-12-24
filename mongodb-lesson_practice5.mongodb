@@ -1,0 +1,12 @@
+
+use("okul");
+db.articles.find();
+
+use("okul");
+db.accounting.find();
+
+// accounting icindeki toplam expense, toplam earn ve net balance degerini bulunuz.
+use("okul");
+var pipeline=[{$addFields:{totalExpens:{$sum:"$expense"},totalEarn:{$sum:"$earn"}}},
+{$addFields:{netBalance:{$add:["$totalExpense","$totalEarn"]}}}];
+db.accounting.aggregate(pipeline);
