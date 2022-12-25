@@ -1,0 +1,119 @@
+
+// points collection ina homework lerin ve midterm lerin ortalamalarini gosteren yeni bir field ekleyiniz
+use("school");
+var pipeline=[{$addFields:{avg_homework:{$avg:"$homework"},avg_midterm:{$avg:"$midterm"}}},
+{$project:{"_id":0,"homework":0,"midterm":0}}];
+db.points.aggregate(pipeline);
+
+// points collection ina homework lerin ve midterm lerin ortalamalarini gosteren yeni bir field ekleyin
+// sadece name, avg_homework, avg_midterm gosterilsin
+use("school");
+var pipeline=[{$addFields:{avg_homework:{$avg:"$homework"},avg_midterm:{$avg:"$midterm"}}},
+{$project:{name:1,avg_homework:1,avg_midterm:1,_id:0}}];
+db.points.aggregate(pipeline);
+
+// points collection ina avg_homework ve avg_midterm in toplamini final field i olarak ekleyiniz,
+// sadece name, avg_homework, avg_midterm, final gosterilsin
+use("school");
+var pipeline=[{$addFields:{avg_homework:{$avg:"$homework"},avg_midterm:{$avg:"$midterm"}}},
+{$addFields:{final:{$sum:["$avg_homework","$avg_midterm"]}}},{$project:{"_id":0,"homework":0,"midterm":0}}];
+db.points.aggregate(pipeline);
+
+use("school");
+var pipeline=[{$addFields:{avg_homework:{$avg:"$homework"},avg_midterm:{$avg:"$midterm"}}},
+{$addFields:{final:{$add:["$avg_homework","$avg_midterm"]}}},{$project:{"_id":0,"homework":0,"midterm":0}}];
+db.points.aggregate(pipeline);
+
+// points collection ina avg_homework un %50 si ve avg_midterm in %50 sinin toplamini final field i olarak ekleyiniz.
+// sadece name, avg_homework, avg_midterm, final gosterilsin.
+use("school");
+var pipeline=[{$addFields:{avg_homework:{$avg:"$homework"},avg_midterm:{$avg:"$midterm"}}},
+{$addFields:{final:{$avg:["$avg_homework","$avg_midterm"]}}},{$project:{"_id":0,"homework":0,"midterm":0}}];
+db.points.aggregate(pipeline);
+
+use("school");
+var pipeline=[{$addFields:{avg_homework:{$avg:"$homework"},avg_midterm:{$avg:"$midterm"}}},
+{$addFields:{final:{$add:[{$multiply:["$avg_homework", 0.5]},{$multiply:["$avg_midterm", 0.5]}]}}},
+{$project:{"_id":0,"homework":0,"midterm":0}}];
+db.points.aggregate(pipeline);
+
+// dokuman ekleme guncelleme ve silme islemlerini tek bir yapi icerisinde gerceklestirme
+use("school");
+db.staff.bulkWrite([{insertOne:{"document":{"name":"Shredder", "age":49, "city":"Konya", "salary":3870, "job":"engineer"}}},
+{updateMany:{"filter":{"name":"Michelangelo"},"update":{$set:{"salary":5000}}}},{deleteMany:{"filter":{"job":"analyst"}}}]);
+
+// ekleme guncelleme ve silme islemlerini tek bir yapida gerceklestirme
+use("school");
+db.staff.bulkWrite([{insertOne:{"document":{"name":"Ninja", "age":37, "city":"Isparta", "salary":3000, "job":"analyst"}}},
+{updateOne:{"filter":{"job":"doctor"}, "update":{$set:{"job":"DR"}}}},
+{updateMany:{"filter":{"age":35}, "update":{$set:{"salary":{$multiply:["$salary", 1.5]}}}}}]);
+
+use("school");
+db.staff.bulkWrite([{insertOne:{"document":{"name":"Ninja", "age":37, "city":"Isparta", "salary":3000, "job":"analyst"}}},
+{updateOne:{"filter":{"job":"doctor"}, "update":{$set:{"job":"DR"}}}},
+{updateMany:{"filter":{"age":35}, "update":{$mul:{"salary":1.5}}}}]);
+
+use("school");
+db.staff.bulkWrite([{insertOne:{"document":{"name":"Ninja", "age":37, "city":"Isparta", "salary":3000, "job":"analyst"}}},
+{updateMany:{"filter":{"age":35}, "update":{$mul:{"salary":1.5}}}}]);
+
+use("school");
+db.staff.find();
+
+use("school");
+db.staff.remove({});
+
+// personel ve staff collection larinda tum calisanlarin isimlerini ve mesleklerini job listeleyiniz.
+use("school");
+var pipeline=[{$unionWith:{coll:"staff"}},{$project:{"_id":0}}];
+db.personel.aggregate(pipeline);
+
+// personel ve staff collection larini city e gore siralayiniz, sadece name ve city gosterilsin.
+use("school");
+db.personel.aggregate({$unionWith:{coll:"staff"}},{$sort:{"city":1}},{$project:{"_id":0,"name":1,"city":1}});
+
+// personel ve staff collection larinda her bir city icin yas ortalamalarini bulunuz.
+use("school");
+db.personel.aggregate({$unionWith:{coll:"staff"}},{$group:{"_id":"$city",city_age_avg:{$avg:"$age"}}});
+
+use("school");
+db.staff.aggregate({$unionWith:{coll:"personel"}},{$group:{"_id":"$city",city_age_avg:{$avg:"$age"}}});
+
+// personel ve staff collection larinda her bir job icin salary toplamini bulunuz.
+use("school");
+db.personel.aggregate({$unionWith:{coll:"staff"}},{$group:{"_id":"$job",sum_job_salary:{$sum:"$salary"}}});
+
+// personel collection indan stafflarla ayni jobtan olanlari goruntuleyiniz.
+// sadece name, job, ortak_meslekler deki name
+use("school");
+db.personel.aggregate({
+$lookup: {
+  from: "staff",
+  localField: "job",
+  foreignField: "job",
+  as: "ortak_meslekler"
+}},{$project:{"_id":0, "name":1, "job":1, "ortak_meslekler.name":1}});
+
+// personel collection indan staff larla ayni job dan olanlarin yas ortalamalarini goruntuleyiniz.
+// sadece name, job, avg_age
+
+use("school");
+db.personel.aggregate({
+$lookup: {
+  from: "staff",
+  localField: "job",
+  foreignField: "job",
+  as: "ortak_meslekler"
+}},{
+$unwind: {
+  path: "$ortak_meslekler",
+}},{
+$project: {
+  "_id":0,
+  "name":1,
+  "job":1,
+  nameStaff:"$ortak_meslekler.name",
+  avg_age:{$avg:["$age","$ortak_meslekler.age"]}
+}});
+
+

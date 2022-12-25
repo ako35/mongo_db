@@ -7,6 +7,57 @@ db.accounting.find();
 
 // accounting icindeki toplam expense, toplam earn ve net balance degerini bulunuz.
 use("okul");
-var pipeline=[{$addFields:{totalExpens:{$sum:"$expense"},totalEarn:{$sum:"$earn"}}},
+var pipeline=[{$addFields:{totalExpense:{$sum:"$expense"},totalEarn:{$sum:"$earn"}}},
 {$addFields:{netBalance:{$add:["$totalExpense","$totalEarn"]}}}];
 db.accounting.aggregate(pipeline);
+
+// yukaridaki sorguda netBalance degerini buyukten kucuge siralayalim.
+use("okul");
+var pipeline=[{$addFields:{totalExpense:{$sum:"$expense"},totalEarn:{$sum:"$earn"}}},
+{$addFields:{netBalance:{$add:["$totalExpense","$totalEarn"]}}},{$sort:{"netBalance":-1}}];
+db.accounting.aggregate(pipeline);
+
+//yukaridakine ek olarak bazi fieldlari gormek istemiyorsam?
+use("okul");
+var pipeline=[{$addFields:{totalExpense:{$sum:"$expense"},totalEarn:{$sum:"$earn"}}},
+{$addFields:{netBalance:{$add:["$totalExpense","$totalEarn"]}}},{$sort:{"netBalance":-1}},
+{$project:{"_id":0,"expense":0,"earn":0}}];
+db.accounting.aggregate(pipeline);
+
+// bulkWrite()
+
+// birden fazla komutu tek komutla nasil yapabiliriz?
+use("okul");
+db.stories.bulkWrite([{insertOne:{"documents":{"author":"mark","score":55,"views":555}}},
+{updateOne:{"filter":{"author":"dave"},"update":{$set:{"score":55}}}},
+{replaceOne:{"filter":{"author":"chris"},"replacement":{"author":"chris tien","score":55}}},
+{deleteOne:{"filter":{"author":"mary"}}}]);
+
+// unionWith()
+
+// iki farkli collection i birlestirme
+
+// iki collection dan tum dokumanlari adet sutununa gore ters siralayarak listeleyiniz.
+// ciktida id gozukmesin.
+use("MEDYA");
+db.romanlar.aggregate([{$unionWith:{coll:"denemeler"}},{$sort:{"adet":-1}},{$project:{"_id":0}}]);
+
+// her bir yayinevinin toplam kitap sayilarini hesaplayan ve siralayan query yaziniz.
+use("MEDYA");
+db.romanlar.aggregate([{$unionWith:{coll:"denemeler"}},{$group:{"_id":"$yayinEvi",toplam_kitap_sayisi:{$sum:"$adet"}}},
+{$sort:{"toplam_kitap_sayisi":1}}]);
+
+// herbir yayinevinin kitap deneme veya roman satislarindan elde edecegi toplam geliri heaplayan query yaziniz.
+// birlesen collectionlarda carpma icin $multiply kullanilir.
+use("MEDYA");
+db.romanlar.aggregate([{$unionWith:{coll:"denemeler"}},
+{$group:{"_id":"$yayinEvi",toplam_gelir:{$sum:{$multiply:["$adet","$fiyat"]}}}}]);
+
+// lookup (left, right, inner join) --> sartli birlesme
+
+// her iki collection da romanlar ve siirler ortak olan yazarlarin toplam kitap sayilarini 
+// ve kitap fiyatlarinin toplamini hesaplayan query yaziniz.
+use("MEDYA");
+db.romanlar.aggregate({$lookup:{from:"siirler",localField:"yazar",foreignField:"muellif",as:"ortak_yazarlar"}},
+{$unwind:{path:"$ortak_yazarlar"}},{$project:{toplam_adet:{$sum:["$adet","$ortak_yazarlar.adet"]},
+toplam_fiyat:{$sum:["$fiyat","$ortak_yazarlar.fiyat"]},_id:0,yazar:1}});

@@ -1,0 +1,90 @@
+// students collection inda name i Peyami Safa olan kisinin bilgilerini degistiriniz.
+use("school");
+db.students.bulkWrite({$replaceOne:{"filter":{"name":"Peyami Safa"},"replacement":{"name":"Peyami Safa","age":44,"city":"Istanbul",
+"grade":535,"department":{"name":"Math","language":"tr"},"books":[{"name":"Math","category":"lessson"},
+{"name":"Sefiller","category":"novel"}]}}});
+
+use("school");
+db.students.findOneAndReplace({"name":"Peyami Safa"},{"name":"Peyami Safa","age":44,"city":"Istanbul",
+"grade":535,"department":{"name":"Math","language":"tr"},"books":[{"name":"Math","category":"lessson"},
+{"name":"Sefiller","category":"novel"}]});
+
+//students collection inda grade i 550 den kucuk, grade i en yuksek kisinin sadece departmentini IT olarak guncelleyiniz.
+use("school");
+db.students.findOneAndUpdate({$and:["grade":{$lt:550},{$max:"$grade"}]},{$set:{"department.name":"IT"}})
+
+use("school");
+db.students.findOneAndUpdate({"grade":{$lt:550}},{$set:{"department.name":"IT"}},{$sort:{"grade":-1}});
+
+// students collection inda yasi age 23 olan kisinin ismini Elif Safak olarak guncelleyiniz ve guncellenen documenti goruntuleyin
+use("school");
+db.students.findOneAndUpdate({"age":23},{$set:{"name":"Elif Safak"}},{"returnNewDocument":true}); 
+
+// students collection inda ismi Kemal Tahir olan varsa yas 36 sehir Konya grade 411 department Chemistry olarak guncelleyiniz yoksa 
+// document ekleyiniz ve goruntuleyiniz.
+use("school");
+db.students.findOneAndUpdate({"name":"Kemal Tahir"},{$set:{"age":36,"city":"Konya","grade":411,"department":"Chemistry"}},
+{returnNewDocument:true,upsert:true});
+
+// students collectioninda Istanbulda yasayanlarin city sini Megakent olarak guncelleyiniz ve guncellenen documenti goruntuleyin
+use("school");
+db.students.updateMany({"city":"İstanbul"},{$set:{"city":"Megakent"}},{returnNewDocument:true});
+
+use("school");
+db.students.find();
+
+// students collection inda department i Physics olan kisiyi siliniz.
+use("school");
+db.students.deleteMany({"department.name":"Physics"});
+
+use("school");
+db.students.deleteMany({"department.name":"IT"});
+
+// students collection inda yasi 30 dan kucuk veya 70 ten buyuk olanlari siliniz.
+use("school");
+db.students.deleteMany({"age":{$lt:30},"age":{$gt:70}});
+
+use("school");
+db.students.deleteMany({$or:[{"age":{$lt:30}},{"age":{$gt:70}}]});
+
+// students collection inda tum dokumanlari siliniz.
+use("school");
+db.students.remove({});
+
+// students collection inda her bir sehir icin yas ortalamalarini bulunuz.
+use("school");
+var pipeline=[{$match:{}},{$group:{"_id":"$city",yas_ortalamasi:{$avg:"$age"}}}];
+db.students.aggregate(pipeline);
+
+// students collection inda her bir department icin max puani bulunuz.
+use("school");
+var pipeline=[{$match:{}},{$group:{"_id":"$department.name",bolum_maxPuani:{$max:"$grade"}}}];
+db.students.aggregate(pipeline);
+
+// students collection inda 40 yasindan buyuklerin her bir department icin min puanini bul.
+use("school");
+var pipeline=[{$match:{"age":{$gt:40}}},{$group:{"_id":"$department.name",kirkUstu_bolum_minPuani:{$max:"$grade"}}}];
+db.students.aggregate(pipeline);
+
+// students collection inda ismi k ile bitenlerin toplam puanini bulunuz.
+use("school");
+var pipeline=[{$match:{"name":{$regex:"k$"}}},{$group:{"_id":null,toplam_puan:{$sum:"$grade"}}}];
+db.students.aggregate(pipeline);
+
+// students collection inda Ankara da yasayanlarin sayisini bulunuz.
+use("school");
+db.students.find({"city":"Ankara"}).count();
+
+use("school");
+var pipeline=[{$match:{"city":"Ankara"}},{$count:"Ankara'da yasayanlarin sayisi: "}];
+db.students.aggregate(pipeline);
+
+// students collection inda yasi 30 dan buyuk olanlarin sayisini bulunuz.
+
+use("school");
+var pipeline=[{$match:{"age":{$lt:30}}},{$count:"Yasi 30'dan buyuk olanlarin sayisi: "}];
+db.students.aggregate(pipeline);
+
+use("school");
+db.students.find({"age":{$lt:30}}).count();
+
