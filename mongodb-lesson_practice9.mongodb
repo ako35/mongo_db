@@ -1,0 +1,124 @@
+use("okul");
+db.grades.find();
+
+// butun assignment larin toplam pointlerini bulunuz.
+use("okul");
+var pipeline=[{
+$match: {}},
+{
+$group: {
+  _id: "$assignment", 
+  total_points:{
+    $sum:"$points"
+    }
+  }
+}];
+db.grades.aggregate(pipeline);
+
+// her assignment in ortalama point degerlerini bulalim.
+use("okul");
+var pipeline=[{
+    $match: {
+    }
+},{
+    $group: {
+      _id: "$assignment",
+      avg_point: {
+        $avg: "$points"
+      }
+    }
+}];
+db.grades.aggregate(pipeline);
+
+// her assignment in en kucuk point degerini bulalim.
+use("okul");
+var pipeline=[{
+    $match: {
+      
+    }
+},{
+   
+    $group: {
+      _id: "$assignment",
+      min_point: {
+        $min: "$points"
+      }
+    }
+}];
+db.grades.aggregate(pipeline);
+
+// assignment sayisi dort den az olan kayitlarin ortalama point sayisini bulalim.
+use("okul");
+var pipeline=[{
+    $match: {
+      "assignment":{$lt:4}
+    }
+},{
+    $group: {
+      _id: "$assignment",
+      avg_point4: {
+        $avg: "$points"
+      }
+    }
+}];
+db.grades.aggregate(pipeline);
+
+// ismi A ile baslayan dokumanlarin toplam point sayisini bulunuz.
+use("okul");
+pipeline=[{
+    $match: {
+      name:{$regex:"^A"}
+    }
+},{
+    $group: {
+      _id: null,
+      sum_pointA: {
+        $sum: "$points"
+      }
+    }
+}];
+db.grades.aggregate(pipeline);
+
+// ismi s ile biten dokumanlarin toplam points sayisini bulalim
+use("okul");
+pipeline=[{
+    $match: {
+      name:{$regex:"s$"}
+    }
+},{
+    $group: {
+      _id: null,
+      sum_points: {
+        $sum: "$points"
+      }
+    }
+}];
+db.grades.aggregate(pipeline);
+
+// points degeri 19 dan dusuk olan dokumanlarin sayisini bulunuz.
+
+// 1. yol
+use("okul");
+db.grades.find({
+    points:{$lt:19}
+}).
+count();
+
+// 2. yol
+use("okul");
+db.grades.count({
+    points:{$lt:19}
+});
+
+// 3. yol
+use("okul");
+pipeline=[{
+    $match: {
+      points:{$lt:19}
+    }
+},{
+    $count: '19 dan az puani olanlar'
+}];
+db.grades.aggregate(pipeline);
+
+
