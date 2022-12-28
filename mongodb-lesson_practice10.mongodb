@@ -1,0 +1,226 @@
+use("okul");
+db.articles.find();
+
+use("okul");
+db.accounting.find();
+
+// accounting icindeki toplam expense, toplam earn ve net balance degerlerini bulunuz.
+use("okul");
+var pipeline=[{
+    $addFields: {
+      total_expense: {
+        $sum:"$expense"
+      }, total_earn:{
+        $sum:"$earn"
+    }
+    }
+},{
+    $addFields: {
+      net_balance: {
+        $add:["$total_expense","$total_earn"]
+      }
+    }
+}];
+db.accounting.aggregate(pipeline);
+
+// yukaridaki sorguda net_balance degerini buyukten kucuge siralayalim.
+use("okul");
+var pipeline=[{
+    $addFields: {
+      total_expense: {
+        $sum:"$expense"
+      }, total_earn:{
+        $sum:"$earn"
+      }
+    }
+},{
+    $addFields: {
+      net_balance: {
+        $add:["$total_expense","$total_earn"]
+      }
+    }
+},{
+    $sort: {
+      net_balance: -1
+    }
+}];
+db.accounting.aggregate(pipeline);
+
+// bazi field lari gormek istemedigimizde...
+use("okul");
+var pipeline=[{
+    $addFields: {
+      total_expense:{
+        $sum:"$expense"
+      }, total_earn:{
+        $sum:"$earn"
+      }
+    }
+},{
+    $addFields: {
+      net_balance: {
+        $add:["$total_expense","$total_earn"]
+      }
+    }
+},{
+    $project: {
+      _id:0,
+      name:1,
+      net_balance:1
+    }
+},{
+    $sort: {
+      net_balance: 1
+    }
+}];
+db.accounting.aggregate(pipeline);
+
+// bulkWrite()
+
+use("okul")
+db.stories.insertMany(
+[{"author":"dave", "score":75, "views": 200},
+{"author":"chris", "score":90, "views": 100},
+{"author":"dave", "score":35, "views": 3000},
+{"author":"mary", "score":80, "views": 350},
+{"author":"dave", "score":54, "views": 333},
+{"author":"mary", "score":97, "views": 2000}]);
+
+use("okul");
+db.stories.remove({});
+
+use("okul");
+db.stories.find();
+
+// Task : Aşağıdaki birden fazla komudu tek methodla nasıl yapabiliriz
+//    * Insert {"author":"mark","score":55, "views":555} ,
+//    * Dave'in score bilgisini 55 olarak güncelleyin ,
+//    * {"author":"chris"} bilgisini {"author":"chris tien","score":55}
+//            olarak değiştirin ,
+//    * Yazarı "mary" olan dökümanı silin .
+use("okul");
+db.stories.bulkWrite([{
+    insertOne:{
+        documents:{"author":"mark","score":55, "views":555}
+    }
+},{
+    updateOne:{
+        filter:{"author":"chris"},
+        update:{
+            $set:{
+                score:55
+        }}
+    }
+},{
+    replaceOne:{
+        filter:{"author":"chris"},
+        replacement:{"author":"chris tien","score":55}
+    }
+},{
+    deleteOne:{
+        filter:{"author":"mary"}
+    }
+}]);
+
+// unionwith
+
+// iki farkli collection dan data cekme
+
+use("MEDYA");
+db.siirler.find();
+
+use("MEDYA");
+db.denemeler.remove({});
+
+// her iki collection dan tum dokumanlari adet sutununa gore ters siralayarak listeleyiniz. 
+// ciktida id gozukmesin.
+use("MEDYA");
+db.romanlar.aggregate({
+  $unionWith: {
+    coll: 'denemeler'
+  }
+},{
+  $sort: {
+    adet: -1
+  }
+},{
+  $project: {
+    _id: 0
+  }
+});
+
+// her bir yayinevinin toplam kitap sayilarini iki collection icin hesaplayan ve siralayan query yaziniz.
+use("MEDYA");
+db.romanlar.aggregate({
+  $unionWith: {
+    coll: 'denemeler'
+  }
+},{
+  $group: {
+    _id: "$yayinEvi",
+    total_book: {
+      $sum: "$adet"
+    }
+  }
+},{
+  $sort: {
+    total_book: 1
+  }
+});
+
+// herbir yayinevinin kitap satislarindan elde edecegi toplam geliri hesaplayan query yaziniz. 
+use("MEDYA");
+db.romanlar.aggregate({
+  
+  $unionWith: {
+    coll: 'denemeler',
+  }
+},{
+  $group: {
+    _id: "$yayinEvi",
+    total_gelir: {
+      $sum: {
+        $multiply:['$fiyat','$adet']
+      }
+    }
+  }
+});
+
+// lookup
+
+// her iki collection da romanlar, siirler ortak olan yazarlarin toplam kitap sayilarini ve kitap fiyatlarinin toplamini hesapla
+use('MEDYA');
+db.romanlar.aggregate({
+  
+  $lookup: {
+    from: 'siirler',
+    localField: 'yazar',
+    foreignField: 'muellif',
+    as: 'ortak_yazarlar'
+  }
+},{
+  
+  $unwind: {
+    path: '$ortak_yazarlar',
+  }
+},{
+  
+  $project: {
+    toplam_adet:{
+      $sum:[
+        '$adet','$ortak_yazarlar.adet'
+      ]
+    },
+    toplam_fiyat:{
+      $sum:[
+        '$fiyat','$ortak_yazarlar.fiyat'
+      ]
+    },
+    _id:0,
+    yazar:1
+  }
+});
+
+
+
+
